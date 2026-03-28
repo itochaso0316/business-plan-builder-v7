@@ -1,9 +1,12 @@
 {
   "mcpServers": {
     "hojokin": {
-      "command": "/Users/itochaso/Projects/hojokin-jp/mcp-server/.venv/bin/python3",
-      "args": ["/Users/itochaso/Projects/hojokin-jp/mcp-server/server.py"],
-      "env": {}
+      "command": "hojokin-mcp",
+      "args": [],
+      "env": {
+        "SUPABASE_URL": "https://ybkmdroccqcumocftqef.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlia21kcm9jY3FjdW1vY2Z0cWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMzY0MjUsImV4cCI6MjA4OTkxMjQyNX0.ZH5GbAgVIBwGKX69u9745Coyvms8cYoEa8YNWJpIbtk"
+      }
     }
   }
 }
