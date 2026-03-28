@@ -1,86 +1,71 @@
 project:
   id: business-plan-builder-v7
-  name: business-plan-builder-v7
+  name: Business Plan Builder v7
   type: app
-  profile: site/content-heavy
-  default_actor: kodak
+  profile: app/ai-agent
+  default_actor: gyoza
   agents:
     - id: gyoza
       role: intake_and_build
       owns:
-        - pages/**
-        - misao/**
-        - scripts/**
+        - agent-prompts/**
+        - personas/**
+        - frameworks/**
+        - output-templates/**
+        - references/**
       escalates_when:
         - lane_split_required
-        - theme_and_page_scope_overlap
-        - cross_page_redesign
+        - architecture_change
     - id: kodak
       role: design_and_review
       owns:
         - docs/**
         - .agent-os/**
-        - cross-cutting_changes
       escalates_when:
         - implementation_blocked
         - routing_contract_needs_change
     - id: botchan
       role: observe_and_collect
       owns:
-        - audits/**
-        - data/external/**
-        - feedback/**
+        - knowledge-base/**
       forbidden:
         - final_copy
-        - publish
   sources_of_truth:
-    - AGENTS.md
     - CLAUDE.md
-    - DESIGN_SYSTEM.md
-    - PARALLEL_SPRINT.md
-    - MEMORY.md
-    - project-memory/
+    - business-plan-builder-SPEC.md
+    - business-plan-builder-v7.skill
   required_reads:
     core-intake:
       - CLAUDE.md
-      - PARALLEL_SPRINT.md
-      - project-memory/current-state.md
-      - DESIGN_SYSTEM.md
+      - business-plan-builder-SPEC.md
     codex-plan:
-      - AGENTS.md
-      - project-memory/open-questions.md
-      - project-memory/sprints/active-sprint.md
-      - .claude/CLAUDE.md
+      - CLAUDE.md
+      - business-plan-builder-SPEC.md
+      - MCP_SETUP.md
   quality_gates:
     intake:
       required: true
       checks:
         - request_has_scope
-        - lane_split_decision_recorded
-        - high_risk_content_flagged
+        - phase_identified
     qa:
       required: true
       checks:
-        - medical_advertising_language_review
-        - ai_looking_ui_review
-        - tax_query_rule_for_news
-        - pages_status_workflow_if_pages_changed
-        - desktop_mobile_regression_review
+        - agent_prompts_template_valid
+        - phase_flow_integrity
+        - mcp_connection_check
     ship-check:
       required: true
       checks:
-        - approval_boundary_clear
-        - changed_files_match_lane_scope
-        - no_direct_publish_action
-        - memory_update_candidates_recorded
+        - changed_files_match_scope
+        - no_hardcoded_secrets
+        - readme_updated_if_needed
     pre-commit:
       required: true
       checks:
         - secrets_scan
         - binary_or_large_file_guard
-        - banned_phrase_guard
         - manifest_integrity
-        - project_memory_presence
   memory_map:
     current-state:
       path: project-memory/current-state.md
@@ -94,13 +79,6 @@ project:
       path: project-memory/decision-log.md
       update_mode: session-draft
       draft_path: project-memory/agent-os/session-drafts/decision-log.md
-    open-questions:
-      path: project-memory/open-questions.md
-      update_mode: session-draft
-      draft_path: project-memory/agent-os/session-drafts/open-questions.md
-    sprint-board:
-      path: project-memory/sprints/active-sprint.md
-      update_mode: reference-only
     tool-logs:
       path: project-memory/agent-os/tool-logs/
       update_mode: append-only
@@ -119,8 +97,8 @@ project:
   install:
     script: .agent-os/scripts/install-common-os.sh
   constraints:
-    - Keep Common OS as an overlay; do not replace existing repo memory files.
-    - Do not publish directly.
-    - Do not introduce flashy AI-looking UI.
-    - Numbers, costs, and achievements must come from data/ or explicit sources.
-    - News Query Loop must include clinic taxQuery.
+    - Keep Common OS as an overlay; do not replace existing repo files.
+    - Phase flow (0-6E) must be maintained.
+    - Agent prompts must use YAML frontmatter templates.
+    - MCP server (hojokin) connection must work via settings.json.
+    - No hardcoded API keys or credentials.
