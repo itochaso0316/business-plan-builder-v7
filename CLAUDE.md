@@ -41,6 +41,7 @@ AGENDA = ""           # 補佐CEOが設定する論点アジェンダ
 | **2** | ⚡ Agent並列起動 | 専門家グリリング（3ラウンド） |
 | **3** | メイン会話 | 市場・競合・法規制リサーチ |
 | **4** | メイン会話 | 事業計画書の共同執筆 |
+| **4.3** | 🔗 MCP連携 | **補助金・助成金マッチング（hojokin MCP）** |
 | **4.5** | ⚡ Agent並列起動 | 実現可能性ストレステスト |
 | **5** | メイン会話 | 最終アウトプット生成 |
 | **6** | ⚡ Agent並列起動 | イテレーション（再経営会議） |
@@ -202,6 +203,62 @@ Phase 1完了レポートの「Phase 2で必ず議論すべき論点」を基に
 
 - Phase 3：Web検索で市場・競合・法規制リサーチ → `references/compliance-research.md` 参照
 - Phase 4：事業計画書の共同執筆 → `output-templates/output-specs.md` 参照
+
+---
+
+## 🔗 Phase 4.3：補助金・助成金マッチング（hojokin MCP連携）
+
+Phase 4で事業計画が概ね固まった段階で、Hojokin MCPツールを呼び出して補助金・助成金を判定する。
+
+### トリガー
+
+Phase 4の事業計画書ドラフト完成後に、以下を提案:
+
+```
+事業計画が概ね固まりました。
+この事業内容に基づいて、活用できる補助金・助成金を
+自動判定できます。判定しますか？
+```
+
+### 実行フロー
+
+1. **hojokin_match** を呼び出し（MCPツール）
+   - Phase 1ヒアリングで把握した企業情報（都道府県、業種、従業員数等）を入力
+   - need_more_info が返ってきたら、不足情報をオーナーに質問
+   - マッチ結果をオーナーに提示
+
+2. オーナーが興味を示した補助金について **hojokin_requirements** を呼び出し
+   - 申請要件・必要書類・審査基準を取得
+   - 申請可否をオーナーと確認
+
+3. 申請を進める場合 **hojokin_plan_draft** を呼び出し
+   - Phase 4の事業計画をベースに申請用計画書ドラフトを生成
+   - 審査基準に対するセルフチェック結果を提示
+
+4. **hojokin_checklist** で申請準備チェックリストを生成
+
+### 入力データマッピング（Phase 1ヒアリング → hojokin_match）
+
+| BPBで把握済みの情報 | hojokin_matchパラメータ |
+|-------------------|----------------------|
+| 会社名 | company_profile.name |
+| 事業内容 | company_profile.business_description |
+| 所在地 | prefecture |
+| 業種 | industries |
+| 従業員数 | employee_count |
+| 年間売上高 | annual_revenue |
+| 事業計画タイトル | project_overview.title |
+| 投資計画 | project_overview.investment_amount |
+
+### MCP設定
+
+`.claude/settings.json` に設定済み。hojokin MCPサーバーが利用可能。
+
+### 注意事項
+
+- 補助金データはBeta版（網羅性は限定的）
+- ドラフトはあくまで「叩き台」。人間の行政書士・中小企業診断士のレビュー推奨
+- 申請期限はリアルタイム情報ではないため、公式サイトでの最新確認を促す
 
 ---
 

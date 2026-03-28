@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "hojokin": {
+      "command": "/Users/itochaso/Projects/hojokin-jp/mcp-server/.venv/bin/python3",
+      "args": ["/Users/itochaso/Projects/hojokin-jp/mcp-server/server.py"],
+      "env": {}
+    }
+  }
+}
