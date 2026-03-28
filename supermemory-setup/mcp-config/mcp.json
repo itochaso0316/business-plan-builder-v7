@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "supermemory": {
+      "command": "npx",
+      "args": ["-y", "@supermemory/mcp"],
+      "env": {
+        "SUPERMEMORY_API_KEY": "${SUPERMEMORY_API_KEY}"
+      }
+    }
+  }
+}
