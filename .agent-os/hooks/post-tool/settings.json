@@ -1,0 +1,47 @@
+{
+  "hook": "post-tool",
+  "enabled": true,
+  "trigger": "post-tool",
+  "mode": "append-only",
+  "actor": "kodak",
+  "task_id_source": "required",
+  "description": "Record tool-level file activity for traceability and later memory synthesis.",
+  "outputs": {
+    "tool_log": "project-memory/agent-os/tool-logs/YYYY-MM-DD.jsonl",
+    "latest_touched_files": "project-memory/agent-os/touched-files/latest.md"
+  },
+  "record": {
+    "required_fields": [
+      "timestamp",
+      "task_id",
+      "actor",
+      "tool_name",
+      "intent",
+      "target_files",
+      "git_status_before",
+      "git_status_after"
+    ]
+  },
+  "steps": [
+    {
+      "id": "capture-before-after",
+      "run": "Read git status and touched target files around each tool execution.",
+      "intent": "Track what changed and what did not."
+    },
+    {
+      "id": "append-jsonl",
+      "run": "Append one JSON object per tool invocation into the daily tool log.",
+      "intent": "Maintain append-only audit history."
+    },
+    {
+      "id": "refresh-latest",
+      "run": "Rewrite latest.md with the union of touched files for the active task.",
+      "intent": "Give the next agent a quick handoff view."
+    }
+  ],
+  "acceptance": [
+    "Logs remain append-only.",
+    "Each entry is attributable to a task id and actor.",
+    "latest.md can be read quickly without parsing JSONL."
+  ]
+}

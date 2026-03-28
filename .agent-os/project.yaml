@@ -1,0 +1,126 @@
+project:
+  id: business-plan-builder-v7
+  name: business-plan-builder-v7
+  type: app
+  profile: site/content-heavy
+  default_actor: kodak
+  agents:
+    - id: gyoza
+      role: intake_and_build
+      owns:
+        - pages/**
+        - misao/**
+        - scripts/**
+      escalates_when:
+        - lane_split_required
+        - theme_and_page_scope_overlap
+        - cross_page_redesign
+    - id: kodak
+      role: design_and_review
+      owns:
+        - docs/**
+        - .agent-os/**
+        - cross-cutting_changes
+      escalates_when:
+        - implementation_blocked
+        - routing_contract_needs_change
+    - id: botchan
+      role: observe_and_collect
+      owns:
+        - audits/**
+        - data/external/**
+        - feedback/**
+      forbidden:
+        - final_copy
+        - publish
+  sources_of_truth:
+    - AGENTS.md
+    - CLAUDE.md
+    - DESIGN_SYSTEM.md
+    - PARALLEL_SPRINT.md
+    - MEMORY.md
+    - project-memory/
+  required_reads:
+    core-intake:
+      - CLAUDE.md
+      - PARALLEL_SPRINT.md
+      - project-memory/current-state.md
+      - DESIGN_SYSTEM.md
+    codex-plan:
+      - AGENTS.md
+      - project-memory/open-questions.md
+      - project-memory/sprints/active-sprint.md
+      - .claude/CLAUDE.md
+  quality_gates:
+    intake:
+      required: true
+      checks:
+        - request_has_scope
+        - lane_split_decision_recorded
+        - high_risk_content_flagged
+    qa:
+      required: true
+      checks:
+        - medical_advertising_language_review
+        - ai_looking_ui_review
+        - tax_query_rule_for_news
+        - pages_status_workflow_if_pages_changed
+        - desktop_mobile_regression_review
+    ship-check:
+      required: true
+      checks:
+        - approval_boundary_clear
+        - changed_files_match_lane_scope
+        - no_direct_publish_action
+        - memory_update_candidates_recorded
+    pre-commit:
+      required: true
+      checks:
+        - secrets_scan
+        - binary_or_large_file_guard
+        - banned_phrase_guard
+        - manifest_integrity
+        - project_memory_presence
+  memory_map:
+    current-state:
+      path: project-memory/current-state.md
+      update_mode: session-draft
+      draft_path: project-memory/agent-os/session-drafts/current-state.md
+    next-actions:
+      path: project-memory/next-actions.md
+      update_mode: session-draft
+      draft_path: project-memory/agent-os/session-drafts/next-actions.md
+    decision-log:
+      path: project-memory/decision-log.md
+      update_mode: session-draft
+      draft_path: project-memory/agent-os/session-drafts/decision-log.md
+    open-questions:
+      path: project-memory/open-questions.md
+      update_mode: session-draft
+      draft_path: project-memory/agent-os/session-drafts/open-questions.md
+    sprint-board:
+      path: project-memory/sprints/active-sprint.md
+      update_mode: reference-only
+    tool-logs:
+      path: project-memory/agent-os/tool-logs/
+      update_mode: append-only
+    touched-files:
+      path: project-memory/agent-os/touched-files/latest.md
+      update_mode: replace-latest
+  hooks:
+    session-end: .agent-os/hooks/session-end/settings.json
+    post-tool: .agent-os/hooks/post-tool/settings.json
+    pre-commit: .agent-os/hooks/pre-commit/settings.json
+  commands:
+    intake: .agent-os/commands/intake.md
+    qa: .agent-os/commands/qa.md
+    ship-check: .agent-os/commands/ship-check.md
+    memory-sync: .agent-os/commands/memory-sync.md
+  install:
+    script: .agent-os/scripts/install-common-os.sh
+  constraints:
+    - Keep Common OS as an overlay; do not replace existing repo memory files.
+    - Do not publish directly.
+    - Do not introduce flashy AI-looking UI.
+    - Numbers, costs, and achievements must come from data/ or explicit sources.
+    - News Query Loop must include clinic taxQuery.

@@ -1,0 +1,56 @@
+{
+  "hook": "session-end",
+  "enabled": true,
+  "trigger": "session-end",
+  "mode": "draft-only",
+  "actor": "kodak",
+  "task_id_source": "required",
+  "description": "Collect touched files and generate draft memory updates without mutating source-of-truth files directly.",
+  "reads": [
+    "project-memory/current-state.md",
+    "project-memory/next-actions.md",
+    "project-memory/decision-log.md",
+    "project-memory/open-questions.md",
+    "project-memory/sprints/active-sprint.md",
+    "project-memory/agent-os/tool-logs/*.jsonl",
+    ".agent-os/project.yaml"
+  ],
+  "outputs": {
+    "current_state_draft": "project-memory/agent-os/session-drafts/current-state.md",
+    "next_actions_draft": "project-memory/agent-os/session-drafts/next-actions.md",
+    "decision_log_draft": "project-memory/agent-os/session-drafts/decision-log.md",
+    "handoff_draft": "project-memory/agent-os/session-drafts/current-handoff.md"
+  },
+  "steps": [
+    {
+      "id": "collect-diff",
+      "run": "git diff --name-only --cached -- . || git diff --name-only -- .",
+      "intent": "Capture changed files for the current task."
+    },
+    {
+      "id": "read-tool-log",
+      "run": "Read latest JSONL entries under project-memory/agent-os/tool-logs/",
+      "intent": "Recover intent and touched-file history."
+    },
+    {
+      "id": "draft-current-state",
+      "run": "Render current-state draft from template with summary, changed files, and unresolved items.",
+      "intent": "Prepare append-only session summary."
+    },
+    {
+      "id": "draft-next-actions",
+      "run": "Render next-actions draft with follow-up tasks and blockers.",
+      "intent": "Preserve unfinished work."
+    },
+    {
+      "id": "draft-decision-log",
+      "run": "Render decision-log draft only when a durable project decision was made.",
+      "intent": "Separate execution notes from durable decisions."
+    }
+  ],
+  "acceptance": [
+    "Draft files exist even when source-of-truth files are dirty.",
+    "No direct mutation of project-memory/current-state.md occurs in the hook.",
+    "Output remains reviewable by human or agent before sync."
+  ]
+}

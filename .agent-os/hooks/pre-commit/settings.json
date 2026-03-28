@@ -1,0 +1,52 @@
+{
+  "hook": "pre-commit",
+  "enabled": true,
+  "trigger": "pre-commit",
+  "mode": "blocking",
+  "actor": "gyoza",
+  "task_id_source": "optional",
+  "description": "Stop high-risk commits before they leave the working tree.",
+  "profile": "site",
+  "checks": [
+    {
+      "id": "secrets-scan",
+      "severity": "error",
+      "rule": "Reject tokens, secrets, or credential-like strings in staged files."
+    },
+    {
+      "id": "large-or-binary",
+      "severity": "error",
+      "rule": "Reject unexpected binary files and warn on oversized assets."
+    },
+    {
+      "id": "medical-ad-phrases",
+      "severity": "error",
+      "rule": "Reject exaggerated medical advertising and guaranteed-outcome phrases."
+    },
+    {
+      "id": "ai-ui-phrases",
+      "severity": "warn",
+      "rule": "Warn on AI-product-like vocabulary or flashy AI-looking UI copy."
+    },
+    {
+      "id": "pages-status-workflow",
+      "severity": "warn",
+      "rule": "If pages/ changed, remind to run python scripts/generate-status-xlsx.py."
+    },
+    {
+      "id": "news-tax-query",
+      "severity": "error",
+      "rule": "Reject news Query Loop changes lacking clinic taxQuery."
+    },
+    {
+      "id": "manifest-integrity",
+      "severity": "error",
+      "rule": "Validate .agent-os/project.yaml and hook settings presence."
+    }
+  ],
+  "acceptance": [
+    "Common repo accidents are blocked before commit.",
+    "misao-specific editorial and workflow rules are checked.",
+    "Warnings remain non-blocking for Phase 1."
+  ]
+}

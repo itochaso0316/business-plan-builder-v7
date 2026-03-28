@@ -1,0 +1,64 @@
+schema_version: "1.0"
+title: "Common OS Phase 1"
+description: "Overlay schema for project-scoped Agent OS manifests, hooks, and command contracts."
+required:
+  project:
+    - id
+    - name
+    - type
+    - profile
+    - agents
+    - sources_of_truth
+    - required_reads
+    - quality_gates
+    - memory_map
+  hooks:
+    - session-end
+    - post-tool
+    - pre-commit
+definitions:
+  project_types:
+    - site
+    - app
+    - bot
+    - mixed
+  agent_ids:
+    - gyoza
+    - kodak
+    - botchan
+  quality_gate_names:
+    - intake
+    - lane-plan
+    - qa
+    - ship-check
+    - pre-commit
+  memory_targets:
+    - current-state
+    - next-actions
+    - decision-log
+    - open-questions
+    - sprint-board
+    - handoff
+contracts:
+  hook_settings:
+    file: "settings.json"
+    top_level_keys:
+      - hook
+      - enabled
+      - trigger
+      - mode
+      - actor
+      - task_id_source
+      - outputs
+      - steps
+  command_docs:
+    format: "markdown"
+    frontmatter_keys:
+      - command
+      - purpose
+      - inputs
+      - outputs
+      - guardrails
+notes:
+  - "This schema is descriptive in Phase 1; validation may be implemented later."
+  - "Project-specific overrides belong in .agent-os/project.yaml."
