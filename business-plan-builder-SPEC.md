@@ -412,3 +412,121 @@ git push -u origin main
 - APIキー・MCPトークンは .gitignore に入れる
 - 顧客データCSV等はリポジトリに含めない
 - CLAUDE.mdのプロジェクト固有設定は各自で調整
+
+---
+
+## 11. 成長型ナレッジベース（Knowledge Base）
+
+### 概要
+
+セッションを重ねるごとに会社・事業・プロジェクトの知識が蓄積され、より精度の高い事業計画を作れるようになる仕組み。
+
+### 3階層構造
+
+```
+knowledge-base/
+├── _registry.md                    # 全社・事業・PJ一覧
+├── _active-context.md              # 今のセッションの対象
+│
+└── companies/{company-slug}/       ← 会社レベル
+    ├── profile.md                  # ミッション・バリュー・沿革
+    ├── owner-profile.md            # オーナー名・背景・意思決定スタイル
+    ├── financial-lens.md           # オーナーの財務の「読み方」
+    ├── team-roster.md              # チーム構成
+    ├── industry-context.md         # 業界知識の蓄積
+    ├── decision-log.md             # 意思決定ログ（追記型）
+    ├── data-sources.md             # 接続済みMCP・データソース一覧
+    ├── financials/                 # 財務データ（インサイト形式）
+    │   ├── _index.md
+    │   ├── closing-status.md       # 月次締め状況
+    │   └── annual-trends.md
+    │
+    └── businesses/{biz-slug}/      ← 事業レベル
+        ├── profile.md
+        ├── kpi-definitions.md
+        ├── kpi-actuals.md          # 計画 vs 実績
+        ├── competitor-map.md
+        ├── customer-insights.md
+        │
+        └── projects/{pj-slug}/     ← プロジェクトレベル
+            ├── plan.md             # 最新版の事業計画
+            ├── plan-versions/
+            ├── expert-team.md
+            ├── phase-state.md
+            ├── sessions/
+            │   ├── _index.md       # 累積インサイト付きインデックス
+            │   └── YYYY-MM-DD.md
+            ├── research/
+            └── deliverables/
+```
+
+### セッションライフサイクル
+
+1. **開始時**: `_active-context.md` を読み、対象の会社/事業/PJ を特定。該当する knowledge-base ファイルをロード（コンテキスト予算 ~4000語）
+2. **実行中**: 通常のPhaseフローに加え、累積知識が専門家エージェントに渡される
+3. **終了時**: 議事録保存、プロファイル更新、意思決定ログ追記、KPI更新、Financial Lens リファイン
+
+### 成長サイクル
+
+| セッション | 蓄積状態 | 効果 |
+|-----------|---------|------|
+| 1回目 | 白紙 | ゼロからヒアリング。通常フロー |
+| 5回目 | 会社・オーナー・財務の見方を把握 | 専門家がリアルデータで議論 |
+| 20回目 | 半年分の実績＋40件の意思決定ログ | 過去の判断の結果も踏まえた助言 |
+
+---
+
+## 12. 会計SaaS連携
+
+### 対応MCP
+
+| MCP | 用途 | 取得データ |
+|-----|------|-----------|
+| freee | 仕訳・試算表・PL/BS | 月次試算表、勘定科目別残高 |
+| Money Forward | 仕訳・レポート | 同上 |
+| Shopify | EC売上 | 注文・売上・商品別データ |
+| Stripe | サブスク課金 | MRR・チャーン・LTV |
+| Google Analytics | トラフィック | セッション・CV率 |
+
+### 締め確認フロー
+
+会計データを使用する際は**必ず**以下を確認：
+
+1. 「○月分まで月次の締め作業は完了していますか？」
+2. 確定月 → **fact**（事業計画の根拠として使用可能）
+3. 未締め月 → **provisional**（予測のインプットとして参考利用、fact扱いしない）
+4. `closing-status.md` に記録
+
+### Financial Lens（財務の読み方学習）
+
+初回の財務データアップロード時に、オーナーに6つの質問を行い、その人固有の「数字の読み方」を `financial-lens.md` に記録。以降すべての財務分析はその視点を起点にする。
+
+### 予測生成
+
+- 確定月のトレンド（直近6-12ヶ月）+ 季節性 + 暫定月データ
+- **楽観 / 基準 / 悲観** のレンジで提示
+- 事業計画書では「確定fact」と「予測」を明確に分離
+
+---
+
+## 13. 累積知識のエージェント連携
+
+Phase 2・4.5・6 で起動される専門家エージェントに、以下の累積知識変数が追加で渡される：
+
+| 変数 | 内容 |
+|------|------|
+| `{{COMPANY_PROFILE}}` | 会社プロファイル要約 |
+| `{{FINANCIAL_LENS}}` | オーナーの財務の見方 |
+| `{{BUSINESS_KPIS}}` | 直近3ヶ月のKPI実績 |
+| `{{RELEVANT_DECISIONS}}` | 関連する過去の意思決定 |
+| `{{CHANGES_SINCE_LAST}}` | 前回セッションからの変化 |
+| `{{FINANCIAL_ACTUALS}}` | 会計データ（確定/暫定区分付き） |
+
+これにより、セッションを重ねるほど専門家の分析がリアルデータに基づいた具体的なものになる。
+
+### 新規エージェントプロンプト
+
+| ファイル | 用途 |
+|---------|------|
+| `agent-prompts/financial-review-expert.md` | 財務データレビュー（Phase 6E / 単独レビュー） |
+| `agent-prompts/kpi-check-in.md` | 定期KPIチェックイン（Phase 6E、軽量版） |
