@@ -22,9 +22,11 @@ Phase 2（専門家グリリング）・Phase 4.5（ストレステスト）・P
 OWNER_NAME = ""       # 最初に聞く。以後「代表」「経営者」禁止、必ず名前で呼ぶ
 BUSINESS_SUMMARY = "" # Phase 1完了時に構築
 EXPERT_TEAM = []      # Phase 1.5で確定
+COMPETITOR_CEOS = []  # Phase 1.5で確定（競合CEO仮想ペルソナ一覧）
 PHASE1_REPORT = ""    # Phase 1完了レポート全文
 DATA_SOURCES = ""     # Phase 0.7で取得したデータ（あれば）
 AGENDA = ""           # 補佐CEOが設定する論点アジェンダ
+COMPETITOR_ANALYSES = "" # Phase 0.5〜1.5で構築した競合分析結果
 ```
 
 ---
@@ -69,10 +71,11 @@ AGENDA = ""           # 補佐CEOが設定する論点アジェンダ
 各Phaseの詳細は以下のファイルを参照：
 
 - Phase 0：資料読み込み → 矛盾・空白を特定
-- Phase 0.5：Web検索でデスクトップリサーチ
+- Phase 0.5：Web検索でデスクトップリサーチ + 競合4層マッピング → `references/competitor-analysis-guide.md` 参照
 - Phase 0.7：データソース棚卸し → `references/customer-data-guide.md` 参照
 - Phase 1：深層ヒアリング → `references/phase1-questions.md` 参照
 - Phase 1.5：専門家チーム編成 → `personas/expert-library.md` 参照
+- Phase 1.5（続き）：競合CEO選定・深堀り分析・ペルソナ生成 → `references/competitor-analysis-guide.md` + `personas/competitor-ceo-template.md` 参照
 
 ### Phase 1 の深さの基準（これを満たさないと進めない）
 
@@ -146,6 +149,47 @@ Phase 1完了レポートの「Phase 2で必ず議論すべき論点」を基に
 2. 「ここまでの指摘で、一番痛いところ・一番気になるところはどこですか？」
 3. オーナーの反応を `OWNER_REACTION_R1` として記録
 
+#### Step 3.5：競合CEOラウンド（Agent並列起動 — 敵の目線）
+
+**`agent-prompts/competitor-ceo-round.md` を Read してテンプレートを取得し、
+各競合CEOごとに変数を埋めて Agent を並列起動する。**
+
+具体的な手順：
+1. `agent-prompts/competitor-ceo-round.md` を読む
+2. Phase 1.5で生成した各競合CEOペルソナを取得
+3. テンプレートの変数を埋める：
+   - `{{COMPETITOR_NAME}}` → 競合企業名
+   - `{{COMPETITOR_CEO_NAME}}` → CEO名
+   - `{{COMPETITOR_CEO_PERSONA}}` → 生成済みペルソナ
+   - `{{COMPETITOR_STRATEGY}}` → 戦略の骨格
+   - `{{COMPETITOR_MOAT}}` → 競争資源
+   - `{{COMPETITOR_CUSTOMERS}}` → 顧客・市場戦略
+   - `{{COMPETITOR_WEAKNESS}}` → 弱点と死角
+   - `{{COMPETITOR_SCALE}}` → 企業規模
+   - `{{OWNER_NAME}}` → オーナー名
+   - `{{BUSINESS_PLAN_OR_PHASE1_REPORT}}` → Phase 1レポート
+   - `{{EXPERT_TEAM_RESULTS}}` → ラウンド1全結果
+4. **全競合CEOのAgentを1つのメッセージで同時に起動する**（並列実行）
+5. Layer 4（ベンチマーク）のCEOには追加指示（先輩モード）を付与
+
+```
+例：4社の競合CEOを同時起動する場合、1つのレスポンスに4つのAgent呼び出しを含める。
+各Agentのdescription: "[COMPETITOR_NAME] CEO 競合グリリング"
+各Agentのprompt: テンプレートに変数を埋めた文字列
+```
+
+#### Step 3.6：競合CEOラウンド結果の提示
+
+全競合CEOの結果が返ってきたら：
+1. 各競合CEOの評価を通訳してオーナーに提示
+2. 特に以下を強調：
+   - **「されると困る」**リスト → 自社の真の強み（ここにリソースを集中）
+   - **「されても困らない」**リスト → 無駄な戦い（ここで消耗しない）
+   - **「不毛な戦い」**の特定 → お互いの消耗を避ける
+   - **「うちならこう対抗する」** → 事前に備えるべきこと
+3. 「競合からこう見られています。一番意外だったこと、納得したことは？」
+4. オーナーの反応を `OWNER_REACTION_COMPETITOR` として記録
+
 #### Step 4：ラウンド2 — クロスグリリング（Agent並列起動 第2波）
 
 **`agent-prompts/round2-cross-grilling.md` を Read してテンプレートを取得。**
@@ -153,11 +197,12 @@ Phase 1完了レポートの「Phase 2で必ず議論すべき論点」を基に
 変数を埋める：
 - `{{EXPERT_ROLE}}` → 専門家名
 - `{{EXPERT_PERSONA}}` → 該当ペルソナ
-- `{{ALL_ROUND1_RESULTS}}` → ラウンド1の全専門家の発言（全文）
-- `{{OWNER_REACTION_R1}}` → オーナーのラウンド1への反応
+- `{{ALL_ROUND1_RESULTS}}` → ラウンド1の全専門家の発言 + 競合CEOラウンドの全発言（全文連結）
+- `{{OWNER_REACTION_R1}}` → オーナーのラウンド1・競合CEOラウンドへの反応
 - `{{OWNER_NAME}}` → オーナー名
 
 **再び全専門家を並列起動。**
+※ ラウンド2では競合CEOの指摘も踏まえた議論を促す。
 
 #### Step 5：ラウンド2結果の提示と意思決定
 
@@ -188,8 +233,10 @@ Phase 1完了レポートの「Phase 2で必ず議論すべき論点」を基に
 
 ```
 □ 全専門家がラウンド1・2で各1回以上実質的に発言した
+□ 全競合CEOが競合CEOラウンドで発言した
 □ 対立論点が最低2つ以上表面化し、オーナーが方向性を決定した
 □ 各専門家の「最大リスク」に対する対応策が1つ以上出ている
+□ 「されると困ること」「されても困らないこと」「不毛な戦い」が明確になっている
 □ オーナーが「腑に落ちた」と明言した
 □ 議事録が作成され、決定事項/保留事項/アクションアイテムが記載されている
 □ Phase 3で調査すべき項目が明確になっている
@@ -280,7 +327,19 @@ Phase 4の事業計画書ドラフト完成後に、以下を提案:
 - `{{RESOURCE_GAPS}}` → Step 2のリソースギャップ分析
 - `{{OWNER_NAME}}` → オーナー名
 
-全専門家を並列起動。結果を収集して実現可能性レポートを作成。
+全専門家を並列起動。
+
+### Step 3.5：競合CEOストレステスト（Agent並列起動）
+
+**`agent-prompts/competitor-ceo-round.md` を Read してテンプレートを取得。**
+
+変数を埋める：
+- `{{BUSINESS_PLAN_OR_PHASE1_REPORT}}` → Phase 4の事業計画書
+- `{{EXPERT_TEAM_RESULTS}}` → Step 3のストレステスト結果
+- その他の競合CEO変数はPhase 1.5で生成済みのペルソナから取得
+
+全競合CEOを並列起動。結果を自社チームの結果と統合して実現可能性レポートを作成。
+レポートに「競合からの対抗シナリオ」セクションを追加。
 
 ### Step 4：現実的スケジュール再構築
 
@@ -316,9 +375,11 @@ D. 特定の部分だけもう少し詰めたい → 該当部分のみ再グリ
 
 1. 変更コンテキストの確認（メイン会話）
 2. 専門家チームの再召集（追加・入替の提案）
-3. **`agent-prompts/iteration-expert.md` を Read して差分グリリングをAgent並列起動**
-4. 計画書の更新（変更箇所マーキング＋理由記録＋バージョン管理）
-5. イテレーション判定（A〜E選択肢提示）
+3. 競合CEOペルソナの更新（新情報があれば反映。競合の追加・入替も提案）
+4. **`agent-prompts/iteration-expert.md` を Read して差分グリリングをAgent並列起動**
+5. **`agent-prompts/competitor-ceo-round.md` を Read して競合CEOも並列起動**（変更後の計画を敵の目で再評価）
+6. 計画書の更新（変更箇所マーキング＋理由記録＋バージョン管理）
+7. イテレーション判定（A〜E選択肢提示）
 
 ### 3回以上のイテレーション時
 
@@ -397,6 +458,7 @@ Phase 2・6の冒頭で補佐CEO（＝メイン会話）がオーナーに伝え
 2. 現在どのPhaseにいるか常に明示する
 3. Phase 1の深さの基準を満たさない限り次に進まない
 4. Phase 2・4.5・6では**必ずAgentツールで専門家を並列起動する**
-5. 各Agent起動時は必ず該当する `agent-prompts/` のテンプレートをReadする
-6. Phase 5完了後は必ずPhase 6またはPhase 6Eを提案する
-7. オーナーが腑に落ちるまで何度でも繰り返す（回数制限なし）
+5. Phase 2・4.5・6では**競合CEOも必ずAgentツールで並列起動する**（`agent-prompts/competitor-ceo-round.md` 使用）
+6. 各Agent起動時は必ず該当する `agent-prompts/` のテンプレートをReadする
+7. Phase 5完了後は必ずPhase 6またはPhase 6Eを提案する
+8. オーナーが腑に落ちるまで何度でも繰り返す（回数制限なし）
